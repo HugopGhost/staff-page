@@ -75,8 +75,26 @@ function staff_page_memberlist()
 
 		add_breadcrumb($lang->staff, 'memberlist.php?action=staff');
 
-		// Get the template and output the page
-		$staff_page_template = display_staff_page();
+		// Display Staff Page
+		if(!$mybb->input['staff_page_action'])
+		{
+			$staff_page_template = display_staff_page();
+		}
+
+		// Display member's description edition
+		elseif($mybb->input['staff_page_action'] == 'edit_member_description')
+		{
+			add_breadcrumb($lang->edit_members_description, 'memberlist.php?action=staff&staff_page_action=edit_member_description');
+			$staff_page_template = display_edit_member_page($mybb->input['id']);
+		}
+
+		// Redirect to the default page
+		else
+		{
+			redirect_to_staff_page_index();
+		}
+
+		// Output the page
 		output_page($staff_page_template);
 		exit();
 	}
@@ -93,8 +111,7 @@ function staff_page_showteam()
 
 	if($mybb->settings['staff_page_showteam_redirect'])
 	{
-		header('Location: memberlist.php?action=staff');
-		exit();
+		redirect_to_staff_page_index();
 	}
 }
 
@@ -129,7 +146,7 @@ function display_staff_page()
 			'allow_videocode' => 0,
 			'filter_badwords' => 0
 		);
-		
+
 		// Cut time for online status
 		$timecut = TIME_NOW - $mybb->settings['wolcutoff'];
 
@@ -220,6 +237,59 @@ function display_staff_page()
 	return $template;
 }
 
+/**
+ * Code for edit member's description page.
+ *
+ * @return string Edit page template.
+ */
+function display_edit_member_page($id = 0)
+{
+	global $db, $lang, $theme, $templates, $plugins, $mybb, $cache;
+	global $header, $headerinclude, $footer;
+
+	// Download member's data
+	$query = $db->simple_select('staff_page_members', '*', 'id = '.intval($id));
+
+	// Display error if member does not exist
+	if(!$db->num_rows($query))
+	{
+		error($lang->specified_member_entry_does_not_exist);
+	}
+
+	// Fetch member and MyBB user data
+	$member = $db->fetch_array($query);
+	$user = get_user($member['user_id']);
+
+	// Check if user has permissions to edit their description
+	if(!($mybb->user['uid'] == $member['user_id'] && $mybb->usergroup['canedittheirstaffdesc']))
+	{
+		error_no_permission();
+	}
+
+	if($mybb->input['submit'])
+	{
+		// Verify incoming POST request
+		verify_post_check($mybb->input['my_post_key']);
+
+		$update_member = array(
+			'description'	=>	$db->escape_string($mybb->input['description'])
+		);
+
+		$db->update_query('staff_page_members', $update_member, 'id = '.intval($id));
+		redirect('memberlist.php?action=staff&staff_page_action=edit_member_description&id='.intval($id), $lang->member_updated);
+	}
+
+	// Format MyBB user's details
+	$user['formatted_name'] = format_name($user['username'], $user['usergroup'], $user['displaygroup']);
+	$user['profilelink'] = build_profile_link($user['formatted_name'], $user['uid']);
+
+	// Build MyCode inserter
+	$codebuttons = build_mycode_inserter('description');
+
+	// Return the template
+	eval('$template = "'.$templates->get('staff_page_edit_member').'";');
+	return $template;
+}
 
 /**
  * Get members of staff.
@@ -284,6 +354,16 @@ function recache_staff_groups()
 	}
 
 	$cache->update('staff_page_groups', $groups);
+}
+
+/**
+ * Redirects to the Staff Page index.
+ *
+ */
+function redirect_to_staff_page_index()
+{
+	header('Location: memberlist.php?action=staff');
+	exit();
 }
 
 /**
@@ -388,6 +468,7 @@ function staff_page_admin_formcontainer_end()
 
 		$options = array();
 		$options[] = $form->generate_check_box('canseestaffpage', 1, $lang->can_see_staff_page, array('checked' => $mybb->input['canseestaffpage']));
+		$options[] = $form->generate_check_box('canedittheirstaffdesc', 1, $lang->can_edit_their_description, array('checked' => $mybb->input['canedittheirstaffdesc']));
 
 		$form_container->output_row($lang->staff_page, '', '<div class="group_settings_bit">'.implode('</div><div class="group_settings_bit">', $options).'</div>');
 	}
@@ -403,6 +484,7 @@ function staff_page_admin_user_groups_edit_commit($admin_permissions)
 	global $updated_group, $mybb;
 
 	$updated_group['canseestaffpage'] = $mybb->input['canseestaffpage'];
+	$updated_group['canedittheirstaffdesc'] = $mybb->input['canedittheirstaffdesc'];
 }
 
 /**
@@ -916,6 +998,11 @@ function staff_page_uninstall()
 		$db->drop_column('usergroups', 'canseestaffpage');
 	}
 
+	if($db->field_exists('canedittheirstaffdesc', 'usergroups'))
+	{
+		$db->drop_column('usergroups', 'canedittheirstaffdesc');
+	}
+
 	// Update the cache
 	$cache->update_usergroups();
 
@@ -988,6 +1075,11 @@ function staff_page_install()
 	if(!$db->field_exists('canseestaffpage', 'usergroups'))
 	{
 		$db->add_column('usergroups', 'canseestaffpage', 'tinyint(1) NOT NULL default \'1\'');
+	}
+
+	if(!$db->field_exists('canedittheirstaffdesc', 'usergroups'))
+	{
+		$db->add_column('usergroups', 'canedittheirstaffdesc', 'tinyint(1) NOT NULL default \'1\'');
 	}
 
 	// Update the cache
