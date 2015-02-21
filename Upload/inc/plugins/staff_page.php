@@ -1,6 +1,6 @@
 <?php
 /**
- * Staff Page v1.0
+ * Staff Page v1.1
  * Author: mrnu <mrnuu@icloud.com>
  *
  * Website: https://github.com/mrnu
@@ -47,7 +47,7 @@ function staff_page_info()
 		'website'		=> 'http://github.com/mrnu/staff-page',
 		'author'		=> 'mrnu',
 		'authorsite'	=> 'http://github.com/mrnu',
-		'version'		=> '1.0',
+		'version'		=> '1.1',
 		'compatibility' => '18*',
 		'codename'      => 'staff_page'
 	);
@@ -275,7 +275,7 @@ function display_edit_member_page($id = 0)
 			'description'	=>	$db->escape_string($mybb->input['description'])
 		);
 
-		$db->update_query('staff_page_members', $update_member, 'id = '.$member['id']));
+		$db->update_query('staff_page_members', $update_member, 'id = '.$member['id']);
 		redirect('memberlist.php?action=staff&staff_page_action=edit_member_description&id='.$member['id'], $lang->member_updated);
 	}
 
@@ -1079,7 +1079,7 @@ function staff_page_install()
 
 	if(!$db->field_exists('canedittheirstaffdesc', 'usergroups'))
 	{
-		$db->add_column('usergroups', 'canedittheirstaffdesc', 'tinyint(1) NOT NULL default \'1\'');
+		$db->add_column('usergroups', 'canedittheirstaffdesc', 'tinyint(1) NOT NULL default \'0\'');
 	}
 
 	// Update the cache
@@ -1122,7 +1122,8 @@ function staff_page_deactivate()
 		'staff_page_member_row',
 		'staff_page_no_groups',
 		'staff_page_no_members',
-		'staff_page_user_avatar'
+		'staff_page_user_avatar',
+		'staff_page_edit_member'
 	);
 
 	$db->delete_query('templates', 'title IN(\'' . implode('\',\'', $templates) . '\')');
@@ -1151,6 +1152,12 @@ function staff_page_activate()
 	if(!$db->field_exists('list_order', 'staff_page_members'))
 	{
 		$db->add_column('staff_page_members', 'list_order', 'tinyint(127) NOT NULL default \'0\'');
+	}
+
+	// Update schema from 1.0 to 1.1
+	if(!$db->field_exists('canedittheirstaffdesc', 'usergroups'))
+	{
+		$db->add_column('usergroups', 'canedittheirstaffdesc', 'tinyint(1) NOT NULL default \'0\'');
 	}
 
 	// Recache groups
@@ -1253,6 +1260,60 @@ function staff_page_activate()
 
 	$templates_array[] = array(
 		'title'    => 'staff_page_no_members',
+		'template' => $db->escape_string($template),
+		'sid'      => '-1',
+		'version'  => '',
+		'dateline' => TIME_NOW
+	);
+
+
+	// staff_page_edit_member
+	$template = '<html>
+<head>
+<title>{$mybb->settings[\'bbname\']} - {$lang->edit_members_description}</title>
+{$headerinclude}
+</head>
+<body>
+{$header}
+<form action="memberlist.php?action=staff&amp;staff_page_action=edit_member_description&amp;id={$member[\'id\']}" method="post" name="edit_members_description">
+<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
+	<tr>
+		<td class="thead" colspan="2">
+		<strong>{$lang->edit_members_description}</strong>
+		</td>
+	</tr>
+	<tr>
+		<td class="trow1">
+			{$lang->user}
+		</td>
+		<td class="trow1">
+			{$user[\'profilelink\']}
+		</td>
+	</tr>
+	<tr>
+		<td class="tcat" colspan="2"><strong>{$lang->description}</strong></td>
+	</tr>
+	<tr>
+		<td class="trow1" colspan="2">
+			<textarea name="description" id="description" rows="20" cols="70" tabindex="2">
+				{$member[\'description\']}
+			</textarea>
+			{$codebuttons}
+		</td>
+	</tr>
+	{$members_rows}
+</table>
+	<br />
+<div style="text-align:center"><input type="submit" class="button" name="submit" value="{$lang->edit_members_description}" tabindex="4" accesskey="s" /></div>
+<input type="hidden" name="my_post_key" value="{$mybb->post_code}" />
+</form>
+
+{$footer}
+</body>
+</html>';
+
+	$templates_array[] = array(
+		'title'    => 'staff_page_edit_member',
 		'template' => $db->escape_string($template),
 		'sid'      => '-1',
 		'version'  => '',
