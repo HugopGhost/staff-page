@@ -33,11 +33,11 @@ $l['wrong_group'] = "Choose group again.";
 
 $l['group_deleted'] = "Group has been deleted.";
 $l['group_not_exist'] = "Group does not exist.";
-$l['do_you_want_to_delete_group'] = "Do you want to delete "{1}"?";
+$l['do_you_want_to_delete_group'] = "Do you want to delete \"{1}\"?";
 $l['group_saved'] = "Group has been updated.";
 
 $l['user_not_exist'] = "User does not exist.";
-$l['do_you_want_to_delete_member'] = "Do you want to member "{1}"?";
+$l['do_you_want_to_delete_member'] = "Do you want to member \"{1}\"?";
 $l['member_deleted'] = "Member has been deleted.";
 $l['member_saved'] = "Member has been updated.";
 $l['add_group_first'] = "First you need to add a group.";
