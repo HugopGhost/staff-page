@@ -118,6 +118,9 @@ function display_staff_page()
 
 	if(count($groups))
 	{
+		// Cut time for online status
+		$timecut = TIME_NOW - $mybb->settings['wolcutoff'];
+
 		// Output all groups
 		$groups_rows = '';
 
@@ -149,6 +152,16 @@ function display_staff_page()
 					$member['formatted_name'] = format_name($member['username'], $member['usergroup'], $member['displaygroup']);
 					$member['profilelink'] = build_profile_link($member['formatted_name'], $member['user_id']);
 					$member['profileurl'] = get_profile_link($member['user_id']);
+
+					// For the online image
+					if($member['lastactive'] > $timecut && ($member['invisible'] == 0 || $mybb->usergroup['canviewwolinvis'] == 1) && $member['lastvisit'] != $member['lastactive'])
+					{
+						$status = "online";
+					}
+					else
+					{
+						$status = "offline";
+					}
 
 					// Parse member's description
 					$description = $parser->parse_message($member['description'], $parser_options);
@@ -232,7 +245,7 @@ function get_staff_members($group_id = 0)
 	//$query = $db->simple_select('staff_page_members', '*', $where_clause, array('order_by'	=>	'user_id', 'order_dir'	=>	'ASC'));
 
 	$query = $db->query('
-		SELECT m.*, u.username, u.uid, u.usergroup, u.displaygroup, u.avatar, u.avatardimensions, u.hideemail, u.receivepms, u.ignorelist
+		SELECT m.*, u.username, u.uid, u.usergroup, u.displaygroup, u.avatar, u.avatardimensions, u.hideemail, u.receivepms, u.ignorelist, u.lastactive, u.invisible, u.lastvisit
 		FROM '.TABLE_PREFIX.'staff_page_members m
 		LEFT JOIN '.TABLE_PREFIX.'users u ON(m.user_id = u.uid)
 		WHERE '.$where_clause.'
@@ -1110,7 +1123,7 @@ function staff_page_activate()
 	</a>
 </td>
 <td class="{$bgcolor}">
-	<div class="largetext">{$member[\'profilelink\']}</div>
+	<div class="largetext"><img src="{$theme[\'imgdir\']}/buddy_{$status}.png" title="{$lang->$status}" alt="{$lang->$status}" style="vertical-align: middle;" />{$member[\'profilelink\']}</div>
 	<div class="smalltext">{$description}</div>
 	<div class="postbit_buttons">{$emailcode}{$pmcode}</div>
 </td>
