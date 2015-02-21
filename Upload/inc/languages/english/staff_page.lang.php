@@ -8,3 +8,6 @@
 $l['staff'] = "Staff";
 $l['no_members'] = "No members found.";
 $l['no_groups'] = "No groups found.";
+
+$l['online'] = "Online";
+$l['offline'] = "Offline";
