@@ -118,6 +118,18 @@ function display_staff_page()
 
 	if(count($groups))
 	{
+		// Initialize parser to handle MyCode inside members' description
+		require_once MYBB_ROOT.'inc/class_parser.php';
+		$parser = new postParser;
+		$parser_options = array(
+			'allow_html' => 0,
+			'allow_mycode' => 1,
+			'allow_smilies' => 1,
+			'allow_imgcode' => 1,
+			'allow_videocode' => 0,
+			'filter_badwords' => 0
+		);
+		
 		// Cut time for online status
 		$timecut = TIME_NOW - $mybb->settings['wolcutoff'];
 
@@ -131,18 +143,6 @@ function display_staff_page()
 
 			if(count($members[$group['id']]))
 			{
-				// Initialize parser to handle MyCode inside members' description
-				require_once MYBB_ROOT.'inc/class_parser.php';
-				$parser = new postParser;
-				$parser_options = array(
-					'allow_html' => 0,
-					'allow_mycode' => 1,
-					'allow_smilies' => 1,
-					'allow_imgcode' => 1,
-					'allow_videocode' => 0,
-					'filter_badwords' => 0
-				);
-
 				// Output members of group
 				$members_rows = '';
 
