@@ -275,8 +275,8 @@ function display_edit_member_page($id = 0)
 			'description'	=>	$db->escape_string($mybb->input['description'])
 		);
 
-		$db->update_query('staff_page_members', $update_member, 'id = '.intval($id));
-		redirect('memberlist.php?action=staff&staff_page_action=edit_member_description&id='.intval($id), $lang->member_updated);
+		$db->update_query('staff_page_members', $update_member, 'id = '.$member['id']));
+		redirect('memberlist.php?action=staff&staff_page_action=edit_member_description&id='.$member['id'], $lang->member_updated);
 	}
 
 	// Format MyBB user's details
